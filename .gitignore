@@ -1,0 +1,32 @@
+#other
+logs
+tmp
+
+# misc files
+*.log
+
+# building
+out
+ij-out
+ant-out
+
+#TEST Results
+coverage/
+
+# vim
+*.swp
+
+#eclipse
+.cache
+.classpath
+.project
+.settings/
+.target/
+
+#OS X
+.DS_Store
+#H2 Db
+*.db
+
+#Netbeans
+nbproject/
