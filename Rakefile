@@ -1,8 +1,3 @@
-# 
-# To change this template, choose Tools | Templates
-# and open the template in the editor.
- 
-
 require 'rubygems'
 require 'rake'
 require 'rake/clean'
@@ -11,7 +6,9 @@ require 'rdoc/task'
 require 'rake/testtask'
 require 'rspec'
 require 'rtsp/client'
-
+require 'configatron'
+require 'rspec/core/rake_task'
+ 
 spec = Gem::Specification.new do |s|
   s.name = 'rtsp_test_suite'
   s.version = '0.0.1'
@@ -19,10 +16,10 @@ spec = Gem::Specification.new do |s|
   s.extra_rdoc_files = ['README']
   s.summary = 'RSPEC test suite for testing a remote rtsp server.'
   s.description = s.summary
-  s.author = ''
-  s.email = ''
+  s.author = 'Nick McCready'
+  s.email = 'nemtcan@gmail.com'
   # s.executables = ['your_executable_here']
-  s.files = %w(LICENSE README Rakefile) + Dir.glob("{bin,lib,spec}/**/*")
+  s.files = %w(LICENSE.rdoc README Rakefile) + Dir.glob("{bin,lib,spec}/**/*")
   s.require_path = "lib"
   s.bindir = "bin"
 end
@@ -34,7 +31,7 @@ Gem::PackageTask.new(spec) do |p|
 end
 
 Rake::RDocTask.new do |rdoc|
-  files =['README', 'LICENSE', 'lib/**/*.rb']
+  files =['README', 'LICENSE.rdoc', 'lib/**/*.rb']
   rdoc.rdoc_files.add(files)
   rdoc.main = "README" # page to start on
   rdoc.title = "rtsp_tester Docs"
@@ -42,7 +39,10 @@ Rake::RDocTask.new do |rdoc|
   rdoc.options << '--line-numbers'
 end
 
-Rake::TestTask.new do |t|
+test = Rake::TestTask.new do |t|
   t.test_files = FileList['test/**/*.rb']
 end
 
+RSpec::Core::RakeTask.new(:spec)
+
+task :default => :spec
