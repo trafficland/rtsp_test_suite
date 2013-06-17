@@ -1,12 +1,13 @@
 require 'sdp'
 require 'spec_helper'
 require 'rtsp/client'
+require 'configatron'
 
 describe "Client use" do
   subject do
     fake_rtsp_server = FakeRTSPServer.new
 
-    RTSP::Client.new('http://localhost') do |connection|
+    RTSP::Client.new(configatron.fake_rtsp_server.url) do |connection|
       connection.socket = fake_rtsp_server
     end
   end
