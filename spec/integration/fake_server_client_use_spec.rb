@@ -1,232 +1,127 @@
-=begin
-adapted from
-https://github.com/turboladen/rtsp
-original copyright notice follows:
+require 'time'
 
-Copyright © 2011 sloveless, mkirby
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of 
-this software and associated documentation files (the “Software”), to deal in 
-the Software without restriction, including without limitation the rights to 
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
-of the Software, and to permit persons to whom the Software is furnished to do 
-so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
-SOFTWARE.
-=end
-require 'sdp'
-require 'spec_helper'
-require 'rtsp/client'
-require 'configatron'
-
-describe "Fake Server Client use" do
-  subject do
-    fake_rtsp_server = FakeRTSPServer.new
-
-    RTSP::Client.new(configatron.fake_rtsp_server.url) do |connection|
-      connection.socket = fake_rtsp_server
-    end
+class FakeRTSPServer
+  #allowing the order of things to be mucked with
+  attr_accessor :setup_maybeSource_maybePorts
+  
+  def initialize(*args)
+    @setup_maybeSource_maybePorts = "source=10.221.222.235;client_port=9000-9001;server_port=6700-6701"
   end
 
-  describe "#options" do
-    it "extracts the server's supported methods" do
-      subject.options
-      subject.supported_methods.should ==
-        [:describe, :setup, :teardown, :play, :pause]
-    end
-
-    it "returns a Response" do
-      response = subject.options
-      response.should be_a RTSP::Response
-    end
+  def send(*args)
+    message = args.first
+    message =~ /^(\w+) .+CSeq: (\S+)/m
+    @message_type = $1.downcase
+    @cseq = $2
+    @session = 1234567890
   end
 
-  describe "#describe" do
-    before do
-      @response = subject.describe
-    end
-
-    it "extracts the aggregate control track" do
-      subject.aggregate_control_track.should == "rtsp://64.202.98.91:554/sa.sdp/"
-    end
-
-    it "extracts the media control tracks" do
-      subject.media_control_tracks.should == ["rtsp://64.202.98.91:554/sa.sdp/trackID=1"]
-    end
-
-    it "extracts the SDP object" do
-      subject.instance_variable_get(:@session_description).should ==
-        @response.body
-    end
-
-    it "extracts the Content-Base header" do
-      subject.instance_variable_get(:@content_base).should ==
-        URI.parse("rtsp://64.202.98.91:554/sa.sdp/")
-    end
-
-    it "returns a Response" do
-      @response.should be_a RTSP::Response
-    end
+  def recvfrom(size)
+    response = eval @message_type
+    [response]
   end
 
-  describe "#announce" do
-    it "returns a Response" do
-      sdp = SDP::Description.new
-      subject.setup("rtsp://localhost/another_track")
-      response = subject.announce("rtsp://localhost/another_track", sdp)
-      response.should be_a RTSP::Response
-    end
+  def options
+    message = "RTSP/1.0 200 OK\r\n"
+    message << "CSeq: #{@cseq}\r\n"
+    message << "Date: #{Time.now.httpdate}\r\n"
+    message << "Public: DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE\r\n"
+    message << "\r\n"
   end
 
-  describe "#setup" do
-    after do
-      subject.teardown("rtsp://localhost/some_track")
-    end
-
-    it "extracts the session number" do
-      subject.session.should be_empty
-      subject.setup("rtsp://localhost/some_track")
-      subject.session[:session_id].should == "1234567890"
-    end
-
-    it "changes the session_state to :ready" do
-      subject.setup("rtsp://localhost/some_track")
-      subject.session_state.should == :ready
-    end
-
-    it "extracts the transport header info" do
-      subject.instance_variable_get(:@transport).should be_nil
-      subject.setup("rtsp://localhost/some_track")
-      subject.instance_variable_get(:@transport).should == {
-        streaming_protocol: "RTP",
-        profile: "AVP",
-        broadcast_type: "unicast",
-        destination: "127.0.0.1",
-        source: "10.221.222.235",
-        client_port: { rtp: "9000", rtcp: "9001" },
-        server_port: { rtp: "6700", rtcp: "6701" }
-      }
-    end
-
-    it "returns a Response" do
-      response = subject.setup("rtsp://localhost/some_track")
-      response.should be_a RTSP::Response
-    end
+  def describe
+    message = "RTSP/1.0 200 OK\r\n"
+    message << "CSeq: #{@cseq}\r\n"
+    message << "Server: DSS/5.5 (Build/489.7; Platform/Linux; Release/Darwin; )\r\n"
+    message << "Cache-Control: no-cache\r\n"
+    message << "Content-length: 380\r\n"
+    message << "Date: Tue, 15 Mar 2011 01:28:57 GMT\r\n"
+    message << "Expires: Tue, 15 Mar 2011 01:28:57 GMT\r\n"
+    message << "Content-Type: application/sdp\r\n"
+    message << "x-Accept-Retransmit: our-retransmit\r\n"
+    message << "x-Accept-Dynamic-Rate: 1\r\n"
+    message << "Content-Base: rtsp://64.202.98.91:554/sa.sdp/\r\n"
+    message << "\r\n"
+    message << "v=\r\n"
+    message << "o=- 1905836198 1274535354 IN IP4 127.0.0.1\r\n"
+    message << "s=Secret Agent from SomaFM\r\n"
+    message << "i=Downtempo Spy Lounge\r\n"
+    message << "c=IN IP4 0.0.0.0\r\n"
+    message << "t=0 0\r\n"
+    message << "a=x-qt-text-cmt:Orban Opticodec-PC\r\n"
+    message << "a=x-qt-text-nam:Secret Agent from SomaFM\r\n"
+    message << "a=x-qt-text-inf:Downtempo Spy Lounge\r\n"
+    message << "a=control:*\r\n"
+    message << "m=audio 0 RTP/AVP 96\r\n"
+    message << "b=AS:40\r\n"
+    message << "a=rtpmap:96 MP4A-LATM/44100/2\r\n"
+    message << "a=fmtp:96 cpresent=0;config=400027200000\r\n"
+    message << "a=control:trackID=1\r\n"
+    message << "\r\n"
   end
 
-  describe "#play" do
-    before do
-      subject.setup("rtsp://localhost/some_track")
-    end
-
-    after do
-      subject.teardown('rtsp://localhost/some_track')
-    end
-
-    it "changes the session_state to :playing" do
-      subject.play("rtsp://localhost/some_track")
-      subject.session_state.should == :playing
-    end
-
-    it "returns a Response" do
-      RTSP::Client.log = true
-      RTP::Logger.log = true
-      response = subject.play("rtsp://localhost/some_track")
-      response.should be_a RTSP::Response
-    end
+  def announce
+    message = "RTSP/1.0 200 OK\r\n"
+    message << "CSeq: #{@cseq}\r\n"
+    message << "\r\n"
   end
 
-  describe "#pause" do
-    before :each do
-      subject.setup("rtsp://localhost/some_track")
-    end
-
-    after do
-      subject.teardown('rtsp://localhost/some_track')
-    end
-
-    it "changes the session_state from :playing to :ready" do
-      subject.play("rtsp://localhost/some_track")
-      subject.pause("rtsp://localhost/some_track")
-      subject.session_state.should == :ready
-    end
-
-    it "changes the session_state from :recording to :ready" do
-      subject.record("rtsp://localhost/some_track")
-      subject.pause("rtsp://localhost/some_track")
-      subject.session_state.should == :ready
-    end
-
-    it "returns a Response" do
-      response = subject.pause("rtsp://localhost/some_track")
-      response.should be_a RTSP::Response
-    end
+  def setup
+    %Q{RTSP/1.0 200 OK\r
+CSeq: #{@cseq}\r
+Date: #{Time.now.httpdate}\r
+Transport: RTP/AVP;unicast;destination=127.0.0.1;#{@setup_maybeSource_maybePorts}\r
+Session: #{@session}\r
+\r\n}
   end
 
-  describe "#teardown" do
-    before do
-      subject.setup("rtsp://localhost/some_track")
-    end
-
-    it "changes the session_state to :init" do
-      subject.session_state.should_not == :init
-      subject.teardown("rtsp://localhost/some_track")
-      subject.session_state.should == :init
-    end
-
-    it "changes the session_id back to 0" do
-      subject.session.should_not be_empty
-      subject.teardown("rtsp://localhost/some_track")
-      subject.session.should be_empty
-    end
-
-    it "returns a Response" do
-      response = subject.teardown("rtsp://localhost/some_track")
-      response.should be_a RTSP::Response
-    end
+  def play
+    %Q{RTSP/1.0 200 OK\r
+CSeq: #{@cseq}\r
+Date: #{Time.now.httpdate}\r
+Range: npt=0.000-\r
+Session: #{@session}\r
+RTP-Info: url=rtsp://10.221.222.235/stream1/track1;seq=17320;rtptime=400880602\r
+\r\n}
   end
 
-  describe "#get_parameter" do
-    it "returns a Response" do
-      response = subject.get_parameter("rtsp://localhost/some_track", "ping!")
-      response.should be_a RTSP::Response
-    end
+  def pause
+    %Q{RTSP/1.0 200 OK\r
+CSeq: #{@cseq}\r
+Date: #{Time.now.httpdate}\r
+\r\n}
   end
 
-  describe "#set_parameter" do
-    it "returns a Response" do
-      response = subject.set_parameter("rtsp://localhost/some_track", "ping!")
-      response.should be_a RTSP::Response
-    end
+  def teardown
+    %Q{RTSP/1.0 200 OK\r
+CSeq: #{@cseq}\r
+Server: DSS/5.5 (Build/489.7; Platform/Linux; Release/Darwin; )\r
+Session: #{@session}\r
+Connection: Close\r
+\r\n}
   end
 
-  describe "#record" do
-    before :each do
-      subject.setup("rtsp://localhost/some_track")
-    end
+  def get_parameter
+    %Q{RTSP/1.0 200 OK\r
+CSeq: #{@cseq}\r
+Content-Length: 8\r
+\r
+response\r
+\r\n}
+  end
 
-    after do
-      subject.teardown('rtsp://localhost/some_track')
-    end
+  def set_parameter
+    %Q{RTSP/1.0 200 OK\r
+CSeq: #{@cseq}\r
+Content-Length: 8\r
+    \r
+response\r
+    \r\n}
+  end
 
-    it "returns a Response" do
-      response = subject.record("rtsp://localhost/some_track")
-      response.is_a?(RTSP::Response).should be_true
-    end
-
-    it "changes the session_state to :recording" do
-      subject.session_state.should == :ready
-      subject.record("rtsp://localhost/some_track")
-      subject.session_state.should == :recording
-    end
+  def record
+    %Q{RTSP/1.0 200 OK\r
+CSeq: #{@cseq}\r
+\r\n}
   end
 end
