@@ -32,7 +32,7 @@ RSpec.configure do |c|
   c.filter_run_excluding :broken => true
 end
 
-describe "Real Server (Wowza) Client use" do
+describe "TrafficLand RTSP Server use" do
   
   # block to show raw output for debugging
   def setup(url)
@@ -51,7 +51,7 @@ describe "Real Server (Wowza) Client use" do
   subject do
     #urls provided by rtsp client adroid app
     #alkass TV (updated)
-    @baseUrl = "78.100.44.238" if @baseUrl.nil?
+    @baseUrl = "127.0.0.1" if @baseUrl.nil?
     @mediaUrl = "#{@baseUrl}/live-kass/kass" if @mediaUrl.nil?
     #puts "RTSP: URL #{@baseUrl}!!!!!"
     #puts "RTSP: Media URL #{@mediaUrl}!!!!!"
@@ -62,8 +62,7 @@ describe "Real Server (Wowza) Client use" do
     it "extracts the server's supported methods" do
       subject.options
       subject.supported_methods.should ==
-        [:describe, :setup, :teardown, :play, :pause, 
-        :options,:announce,:record,:get_parameter]
+        [:options, :describe, :setup, :play, :teardown]
     end
 
     it "returns a Response" do
@@ -72,6 +71,7 @@ describe "Real Server (Wowza) Client use" do
     end
   end
 
+  #NOT YET IMPLEMENTED!
   #FORBIDDEN by WOWZA server  
   describe "#describe", :broken => true do
     before do
@@ -108,7 +108,8 @@ describe "Real Server (Wowza) Client use" do
     end
   end
   
-  describe "#announce" do
+  #NOT YET IMPLEMENTED!
+  describe "#announce", :broken => true do
     it "returns a Response" do
       sdp = SDP::Description.new
       subject.setup(@mediaUrl)
@@ -117,7 +118,8 @@ describe "Real Server (Wowza) Client use" do
     end
   end
   
-  describe "#setup" do
+  #NOT YET IMPLEMENTED!
+  describe "#setup", :broken => true do
     after do
       subject.teardown(@mediaUrl)
     end
@@ -151,7 +153,8 @@ describe "Real Server (Wowza) Client use" do
     end
   end
   
-  describe "#play" do
+  #NOT YET IMPLEMENTED!
+  describe "#play", :broken => true do
     before do
       subject.setup(@mediaUrl)
     end
@@ -171,7 +174,8 @@ describe "Real Server (Wowza) Client use" do
     end
   end
   
-  describe "#pause" do
+  #NOT YET IMPLEMENTED!
+  describe "#pause", :broken => true do
     before :each do
       subject.setup(@mediaUrl)
     end
@@ -198,7 +202,8 @@ describe "Real Server (Wowza) Client use" do
     end
   end
   
-  describe "#teardown" do
+  #NOT YET IMPLEMENTED!
+  describe "#teardown", :broken => true do
     before do
       subject.setup(@mediaUrl)
     end
@@ -220,15 +225,17 @@ describe "Real Server (Wowza) Client use" do
       response.should be_a RTSP::Response
     end
   end
-  
-  describe "#get_parameter" do
+
+  #NOT IMPLEMENTED!
+  describe "#get_parameter", :broken => true do
     it "returns a Response" do
       response = subject.get_parameter(@mediaUrl, "ping!")
       response.should be_a RTSP::Response
     end
   end
   
-  describe "#set_parameter" do
+  #NOT IMPLEMENTED!
+  describe "#set_parameter", :broken => true do
     it "returns a Response Error 403 response" do
       begin  
         response = subject.set_parameter(@mediaUrl, "ping!")
@@ -239,7 +246,8 @@ describe "Real Server (Wowza) Client use" do
     end
   end
   
-  describe "#record" do
+  #NOT IMPLEMENTED!
+  describe "#record", :broken => true do
     before :each do
       subject.setup(@mediaUrl)
     end
