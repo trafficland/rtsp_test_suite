@@ -1,14 +1,15 @@
 require 'rubygems'
 require 'rake'
 require 'rake/clean'
+require 'rake/version_task'
 require 'rubygems/package_task'
 require 'rdoc/task'
 require 'rake/testtask'
-require 'rspec'
 require 'rtsp/client'
-require 'configatron'
 require 'rspec/core/rake_task'
  
+Rake::VersionTask.new
+
 spec = Gem::Specification.new do |s|
   s.name = 'rtsp_test_suite'
   s.version = '0.0.1'

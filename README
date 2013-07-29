@@ -1,3 +1,4 @@
 == rtsp_test_suite
 
-rake and rspec suite to test a remote rtsp server's functionality
+rake and rspec suite to test a remote rtsp server's functionality via
+turboladen's rtsp @  - https://github.com/turboladen/rtsp
